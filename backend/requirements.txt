@@ -1,0 +1,29 @@
+# Django Core
+Django==5.0.1
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-filter==23.5
+
+# Database
+psycopg2-binary==2.9.9
+
+# Authentication
+djangorestframework-simplejwt==5.3.1
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# AI & Speech Services
+google-generativeai==0.3.2
+deepgram-sdk==3.2.7
+google-cloud-texttospeech==2.16.3
+
+# File Handling
+Pillow==10.2.0
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2024.1
+
+# Development
+django-extensions==3.2.3
