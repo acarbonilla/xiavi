@@ -16,7 +16,7 @@ graph TD
     F --> G[Active Conversation]
     G --> H{Continue?}
     H -->|Yes| G
-    H -->|No| I[End & Get Feedback]
+    H -->|No| I[End Conversation]
     I --> D
 ```
 
@@ -29,6 +29,7 @@ graph TD
 **Page:** `/register`
 
 **User Actions:**
+
 1. Visit the registration page
 2. Fill out the form:
    - Username
@@ -40,6 +41,7 @@ graph TD
    - Target Language (default: English)
 
 **API Call:**
+
 ```http
 POST /api/auth/register/
 Content-Type: application/json
@@ -56,12 +58,14 @@ Content-Type: application/json
 ```
 
 **Backend Process:**
+
 1. Validate user input (unique username/email, password strength)
 2. Create `CustomUser` record
 3. Auto-create `LearnerProfile` (via signals)
 4. Return success response
 
 **Response:**
+
 ```json
 {
   "message": "User registered successfully",
@@ -83,12 +87,14 @@ Content-Type: application/json
 **Page:** `/login`
 
 **User Actions:**
+
 1. Enter credentials:
    - Username or Email
    - Password
 2. Click "Login"
 
 **API Call:**
+
 ```http
 POST /api/auth/login/
 Content-Type: application/json
@@ -100,12 +106,14 @@ Content-Type: application/json
 ```
 
 **Backend Process:**
+
 1. Authenticate user credentials
 2. Generate JWT access token (15 min expiry)
 3. Generate JWT refresh token (1 day expiry)
 4. Return tokens + user profile data
 
 **Response:**
+
 ```json
 {
   "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -127,6 +135,7 @@ Content-Type: application/json
 ```
 
 **Frontend Actions:**
+
 1. Store tokens in localStorage/cookies
 2. Store user data in React Context
 3. Set Authorization header: `Bearer <access_token>`
@@ -141,6 +150,7 @@ Content-Type: application/json
 **Page:** `/dashboard`
 
 **User Actions:**
+
 1. View personal statistics
 2. Check daily goals progress
 3. See conversation history
@@ -149,12 +159,14 @@ Content-Type: application/json
 **API Calls:**
 
 **3a. Get Profile & Stats**
+
 ```http
 GET /api/auth/profile/
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -165,14 +177,6 @@ Authorization: Bearer <access_token>
     "total_speaking_time": 3600,
     "current_streak": 7,
     "longest_streak": 12,
-    "skill_scores": {
-      "clarity": 78,
-      "fluency": 82,
-      "vocabulary": 75,
-      "grammar": 80,
-      "confidence": 85,
-      "engagement": 88
-    },
     "topics_covered": {
       "Casual Chat": 8,
       "Business Communication": 5,
@@ -183,12 +187,14 @@ Authorization: Bearer <access_token>
 ```
 
 **3b. Get Recent Sessions**
+
 ```http
 GET /api/conversations/sessions/?limit=5
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "count": 15,
@@ -211,12 +217,14 @@ Authorization: Bearer <access_token>
 ```
 
 **3c. Get Goal Status**
+
 ```http
 GET /api/auth/profile/goal-status/
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "daily_goal_minutes": 10,
@@ -230,10 +238,10 @@ Authorization: Bearer <access_token>
 ```
 
 **Dashboard Components:**
+
 - Welcome message with streak 🔥
 - Daily goals widget with progress bars
 - Quick stats (total conversations, speaking time)
-- Skill scores radar chart
 - Topic distribution pie chart
 - Recent sessions list
 - "Start New Conversation" button (primary CTA)
@@ -248,6 +256,7 @@ Authorization: Bearer <access_token>
 **Page:** `/settings`
 
 **User Actions:**
+
 1. Navigate to Settings from Navbar
 2. Update Profile Information (Name, Language Level)
 3. **Select AI Voice Preference:**
@@ -256,6 +265,7 @@ Authorization: Bearer <access_token>
 4. Click "Save Changes"
 
 **API Call:**
+
 ```http
 PATCH /api/auth/profile/
 Authorization: Bearer <access_token>
@@ -272,12 +282,14 @@ Content-Type: application/json
 ```
 
 **Backend Process:**
+
 1. Validate user data
 2. Update `CustomUser` fields
 3. Update nested `LearnerProfile` fields (including `preferred_voice`)
 4. Return updated user object
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -302,17 +314,20 @@ Content-Type: application/json
 **Modal/Page:** Topic selection dialog on dashboard
 
 **User Actions:**
+
 1. Browse available topics
 2. Filter by difficulty (optional)
 3. Select a topic
 
 **API Call:**
+
 ```http
 GET /api/conversations/topics/
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "count": 5,
@@ -367,6 +382,7 @@ Authorization: Bearer <access_token>
 ```
 
 **UI Display:**
+
 - Topic cards with icons and colors
 - Difficulty badge (Beginner/Intermediate/Advanced)
 - Hover effects showing description
@@ -383,6 +399,7 @@ Authorization: Bearer <access_token>
 **User Action:** After selecting topic, click "Start Conversation"
 
 **API Call:**
+
 ```http
 POST /api/conversations/sessions/start_conversation/
 Authorization: Bearer <access_token>
@@ -394,6 +411,7 @@ Content-Type: application/json
 ```
 
 **Backend Process:**
+
 1. Create new `ConversationSession` record
 2. Set status to "active"
 3. Increment topic conversation count
@@ -403,6 +421,7 @@ Content-Type: application/json
 7. Return session data with opening message
 
 **Response:**
+
 ```json
 {
   "session": {
@@ -429,6 +448,7 @@ Content-Type: application/json
 ```
 
 **Frontend Actions:**
+
 1. Navigate to `/conversation/16`
 2. Load conversation interface
 3. Display AI opening message
@@ -442,6 +462,7 @@ Content-Type: application/json
 **Page:** `/conversation/16`
 
 **Interface Components:**
+
 - Message history display
 - Audio visualization (waveform)
 - Record button (microphone icon)
@@ -454,6 +475,7 @@ Content-Type: application/json
 #### 6.1: User Speaks (First Turn)
 
 **User Actions:**
+
 1. Click microphone button to start recording
 2. Speak response (e.g., "I'm doing great! I'd like to talk about my weekend trip.")
 3. Either:
@@ -461,6 +483,7 @@ Content-Type: application/json
    - Wait for VAD auto-stop (4 seconds of silence)
 
 **Frontend Process:**
+
 1. Capture audio using Web Audio API
 2. Show real-time audio level meter
 3. Detect silence using VAD (15% threshold)
@@ -473,6 +496,7 @@ Content-Type: application/json
 #### 6.2: Send Audio Message
 
 **API Call:**
+
 ```http
 POST /api/conversations/sessions/16/speak/
 Authorization: Bearer <access_token>
@@ -485,6 +509,7 @@ Content-Type: multipart/form-data
 ```
 
 **Backend Process:**
+
 1. Save audio file to media storage
 2. **Deepgram STT:** Transcribe audio to text
 3. Create user message record (save transcript)
@@ -500,6 +525,7 @@ Content-Type: multipart/form-data
 8. Return AI response
 
 **Response:**
+
 ```json
 {
   "user_message": {
@@ -522,6 +548,7 @@ Content-Type: multipart/form-data
 ```
 
 **Frontend Actions:**
+
 1. Display user message in chat
 2. Display AI response in chat
 3. Auto-play AI audio response
@@ -540,16 +567,16 @@ User → Record Audio → Send → STT → AI Processing → TTS → Response �
 
 **Example Conversation:**
 
-| Turn | Role | Message |
-|------|------|---------|
-| 1 | AI | "Hello! I'm so glad you're here today! How are you doing?" |
-| 2 | User | "I'm doing great! I'd like to talk about my weekend trip." |
-| 3 | AI | "Oh, a weekend trip sounds exciting! Where did you go?" |
-| 4 | User | "I went to the beach with my family." |
-| 5 | AI | "That sounds wonderful! What activities did you do at the beach?" |
-| 6 | User | "We went swimming and built sandcastles." |
-| 7 | AI | "How lovely! Did the weather cooperate with your plans?" |
-| ... | ... | ... |
+| Turn | Role | Message                                                           |
+| ---- | ---- | ----------------------------------------------------------------- |
+| 1    | AI   | "Hello! I'm so glad you're here today! How are you doing?"        |
+| 2    | User | "I'm doing great! I'd like to talk about my weekend trip."        |
+| 3    | AI   | "Oh, a weekend trip sounds exciting! Where did you go?"           |
+| 4    | User | "I went to the beach with my family."                             |
+| 5    | AI   | "That sounds wonderful! What activities did you do at the beach?" |
+| 6    | User | "We went swimming and built sandcastles."                         |
+| 7    | AI   | "How lovely! Did the weather cooperate with your plans?"          |
+| ...  | ...  | ...                                                               |
 
 ---
 
@@ -558,6 +585,7 @@ User → Record Audio → Send → STT → AI Processing → TTS → Response �
 **User Action:** Click "Upload Document" button
 
 **API Call:**
+
 ```http
 POST /api/conversations/sessions/16/upload_document/
 Authorization: Bearer <access_token>
@@ -569,6 +597,7 @@ Content-Type: multipart/form-data
 ```
 
 **Backend Process:**
+
 1. Validate file (PDF/TXT, max 10MB)
 2. Check document limit (max 5 per session)
 3. Save file to media storage
@@ -580,6 +609,7 @@ Content-Type: multipart/form-data
 5. Mark document as processed
 
 **Response:**
+
 ```json
 {
   "id": 5,
@@ -593,6 +623,7 @@ Content-Type: multipart/form-data
 ```
 
 **RAG in Conversation:**
+
 - AI retrieves relevant chunks using cosine similarity
 - Top 5 chunks added to AI context
 - AI references document content in responses
@@ -604,12 +635,14 @@ Content-Type: multipart/form-data
 **User Action:** Scroll to view conversation history
 
 **API Call:**
+
 ```http
 GET /api/conversations/sessions/16/messages/
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "count": 14,
@@ -640,12 +673,14 @@ Authorization: Bearer <access_token>
 **User Action:** Click "End Conversation" button
 
 **API Call:**
+
 ```http
 POST /api/conversations/sessions/16/end/
 Authorization: Bearer <access_token>
 ```
 
 **Backend Process:**
+
 1. Mark session status as "completed"
 2. Calculate duration (end_time - start_time)
 3. Update learner profile:
@@ -653,15 +688,9 @@ Authorization: Bearer <access_token>
    - Add speaking_time
    - Update streak
    - Update topics_covered
-4. **Gemini AI:** Generate comprehensive feedback
-   - Analyze all messages
-   - Score 6 dimensions (0-100)
-   - Generate strengths & improvements
-   - Suggest vocabulary words
-5. Save feedback to database
-6. Return feedback
 
 **Response:**
+
 ```json
 {
   "session": {
@@ -669,39 +698,16 @@ Authorization: Bearer <access_token>
     "status": "completed",
     "duration_seconds": 900
   },
-  "feedback": {
-    "id": 10,
-    "overall_score": 82,
-    "clarity_score": 80,
-    "fluency_score": 85,
-    "vocabulary_score": 78,
-    "grammar_score": 83,
-    "confidence_score": 88,
-    "engagement_score": 86,
-    "strengths": "Great use of descriptive language. Your pronunciation was clear and easy to understand. You showed good engagement by asking follow-up questions.",
-    "improvements": "Try to use more varied sentence structures. Practice using past perfect tense in storytelling. Work on reducing filler words like 'um' and 'uh'.",
-    "vocabulary_suggestions": [
-      {
-        "word": "picturesque",
-        "definition": "visually attractive, especially in a quaint or charming way",
-        "example": "The beach was picturesque with its white sand and clear water."
-      },
-      {
-        "word": "memorable",
-        "definition": "worth remembering or easily remembered",
-        "example": "It was a memorable weekend with my family."
-      }
-    ]
-  }
+  "message": "Conversation ended successfully"
 }
 ```
 
 **Frontend Actions:**
-1. Navigate to feedback page
-2. Display scores with visual charts
-3. Show strengths and improvements
-4. Display vocabulary suggestions with "Add to Vocabulary" buttons
-5. Show "Back to Dashboard" button
+
+1. Redirect to dashboard
+2. Show conversation completion message
+
+**Note:** The app focuses on real-time grammar corrections and natural conversation practice. AI provides immediate feedback during the conversation rather than post-conversation analysis. 2. Display scores with visual charts 3. Show strengths and improvements 4. Display vocabulary suggestions with "Add to Vocabulary" buttons 5. Show "Back to Dashboard" button
 
 ---
 
@@ -714,14 +720,14 @@ sequenceDiagram
     participant API as Backend API
     participant DB as Database
     participant AI as AI Services
-    
+
     Note over U,AI: Step 1: Registration
     U->>F: Fill signup form
     F->>API: POST /api/auth/register/
     API->>DB: Create User & Profile
     API-->>F: User created
     F-->>U: Redirect to login
-    
+
     Note over U,AI: Step 2: Login
     U->>F: Enter credentials
     F->>API: POST /api/auth/login/
@@ -729,7 +735,7 @@ sequenceDiagram
     API-->>F: JWT tokens + user data
     F->>F: Store tokens
     F-->>U: Redirect to dashboard
-    
+
     Note over U,AI: Step 3: Dashboard
     F->>API: GET /api/auth/profile/
     API->>DB: Fetch user stats
@@ -738,13 +744,13 @@ sequenceDiagram
     API->>DB: Fetch sessions
     API-->>F: Session list
     F-->>U: Display dashboard
-    
+
     Note over U,AI: Step 4: Choose Topic
     F->>API: GET /api/conversations/topics/
     API->>DB: Fetch topics
     API-->>F: Topic list
     U->>F: Select topic
-    
+
     Note over U,AI: Step 5: Start Conversation
     F->>API: POST /sessions/start_conversation/
     API->>DB: Create session
@@ -755,7 +761,7 @@ sequenceDiagram
     API->>DB: Save AI message
     API-->>F: Session + opening
     F-->>U: Play opening audio
-    
+
     Note over U,AI: Step 6: Active Conversation
     U->>F: Record audio
     F->>API: POST /sessions/{id}/speak/
@@ -770,55 +776,50 @@ sequenceDiagram
     API->>DB: Save AI message
     API-->>F: User msg + AI response
     F-->>U: Display & play response
-    
+
     Note over U,AI: End Conversation
     U->>F: Click end
     F->>API: POST /sessions/{id}/end/
     API->>DB: Update session status
-    API->>AI: Generate feedback
-    AI-->>API: Scores & analysis
-    API->>DB: Save feedback
     API->>DB: Update user stats
-    API-->>F: Feedback data
-    F-->>U: Display feedback
+    API-->>F: Success response
+    F-->>U: Return to dashboard
 ```
 
 ---
 
 ## 🔑 Key Technologies Per Step
 
-| Step | Frontend | Backend | AI Service | Database |
-|------|----------|---------|------------|----------|
-| Signup | React Form | Django REST | - | PostgreSQL |
-| Login | JWT Storage | djangorestframework-simplejwt | - | PostgreSQL |
-| Dashboard | React Charts | Django ORM | - | PostgreSQL |
-| Choose Topic | React Cards | Django ViewSet | - | PostgreSQL |
-| Start Conv | Audio Player | Django + Gemini | Gemini 2.0 + Google TTS | PostgreSQL |
-| Active Conv | Web Audio API | Django + AI Stack | Deepgram + Gemini + TTS | PostgreSQL |
-| End Conv | React Charts | Django + Gemini | Gemini Analysis | PostgreSQL |
+| Step         | Frontend      | Backend                       | AI Service              | Database   |
+| ------------ | ------------- | ----------------------------- | ----------------------- | ---------- |
+| Signup       | React Form    | Django REST                   | -                       | PostgreSQL |
+| Login        | JWT Storage   | djangorestframework-simplejwt | -                       | PostgreSQL |
+| Dashboard    | React Charts  | Django ORM                    | -                       | PostgreSQL |
+| Choose Topic | React Cards   | Django ViewSet                | -                       | PostgreSQL |
+| Start Conv   | Audio Player  | Django + Gemini               | Gemini 2.0 + Google TTS | PostgreSQL |
+| Active Conv  | Web Audio API | Django + AI Stack             | Deepgram + Gemini + TTS | PostgreSQL |
+| End Conv     | React Router  | Django                        | -                       | PostgreSQL |
 
 ---
 
 ## 📝 User Experience Timeline
 
-| Time | Action | Duration |
-|------|--------|----------|
-| 0:00 | Land on app | - |
-| 0:30 | Sign up | 30s |
-| 1:00 | Login | 30s |
-| 1:10 | View dashboard | 10s |
-| 1:30 | Browse topics | 20s |
-| 1:40 | Select topic | 10s |
-| 1:45 | AI greeting plays | 5s |
-| 2:00 | User speaks first message | 15s |
-| 2:05 | AI processes & responds | 5s |
-| 2:10 | AI response plays | 5s |
-| ... | Conversation continues | 10-15 min |
-| 15:00 | End conversation | - |
-| 15:05 | View feedback | 2-3 min |
-| 18:00 | Return to dashboard | - |
+| Time  | Action                                 | Duration  |
+| ----- | -------------------------------------- | --------- |
+| 0:00  | Land on app                            | -         |
+| 0:30  | Sign up                                | 30s       |
+| 1:00  | Login                                  | 30s       |
+| 1:10  | View dashboard                         | 10s       |
+| 1:30  | Browse topics                          | 20s       |
+| 1:40  | Select topic                           | 10s       |
+| 1:45  | AI greeting plays                      | 5s        |
+| 2:00  | User speaks first message              | 15s       |
+| 2:05  | AI processes & responds                | 5s        |
+| 2:10  | AI response plays                      | 5s        |
+| ...   | Conversation continues                 | 10-15 min |
+| 15:00 | End conversation & return to dashboard | -         |
 
-**Total First Session:** ~18 minutes (signup to feedback)
+**Total First Session:** ~15 minutes (signup to end of conversation)
 
 ---
 

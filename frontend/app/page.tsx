@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { MessageCircle, Brain, TrendingUp, Mic, ArrowRight, Sparkles } from 'lucide-react';
+import Link from "next/link";
+import { MessageCircle, Brain, TrendingUp, Mic, ArrowRight, Sparkles } from "lucide-react";
 
 export default function Home() {
   return (
@@ -40,8 +40,8 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto animate-slide-up">
-            Practice speaking with AI on any topic. Get instant feedback, improve your communication skills,
-            and track your progress—all powered by cutting-edge speech recognition and AI technology.
+            Practice English naturally with an AI teacher that listens, corrects, and guides you in real-time. Build
+            confidence through authentic conversations—powered by advanced speech recognition and AI.
           </p>
           <div className="flex justify-center space-x-4 animate-slide-up">
             <Link href="/register" className="btn-primary text-lg px-8 py-3 flex items-center space-x-2">
@@ -57,18 +57,14 @@ export default function Home() {
 
       {/* Features Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-          How It Works
-        </h2>
+        <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">How It Works</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {/* Feature 1 */}
           <div className="card group hover:scale-105 transition-transform duration-200">
             <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary-200 transition-colors">
               <MessageCircle className="w-6 h-6 text-primary-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Choose a Topic
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Choose a Topic</h3>
             <p className="text-gray-600">
               Select from various conversation topics—casual chat, business, academic discussions, and more.
             </p>
@@ -79,9 +75,7 @@ export default function Home() {
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
               <Mic className="w-6 h-6 text-purple-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Have a Conversation
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Have a Conversation</h3>
             <p className="text-gray-600">
               Speak naturally with AI. Your speech is transcribed in real-time and AI responds contextually.
             </p>
@@ -92,11 +86,10 @@ export default function Home() {
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
               <TrendingUp className="w-6 h-6 text-green-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Get Feedback
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Learn & Improve</h3>
             <p className="text-gray-600">
-              Receive detailed analysis on clarity, fluency, vocabulary, and more. Track your improvement over time.
+              Get real-time corrections from your AI teacher. Build fluency through natural practice, just like learning
+              from a real ESL instructor.
             </p>
           </div>
         </div>
@@ -107,15 +100,29 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Master Communication Skills
-              </h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">Master Communication Skills</h2>
               <div className="space-y-4">
                 {[
-                  { icon: Brain, title: 'AI-Powered Analysis', desc: 'Get intelligent feedback on your speaking patterns' },
-                  { icon: TrendingUp, title: 'Track Progress', desc: 'Monitor your improvement with detailed metrics' },
-                  { icon: MessageCircle, title: 'Natural Conversations', desc: 'Practice with realistic, flowing dialogue' },
-                  { icon: Sparkles, title: 'Personalized Learning', desc: 'Adapt to your level and learning goals' },
+                  {
+                    icon: Brain,
+                    title: "AI ESL Teacher",
+                    desc: "Learn from an AI that acts like a real English teacher",
+                  },
+                  {
+                    icon: MessageCircle,
+                    title: "Real-Time Corrections",
+                    desc: "Get grammar and pronunciation feedback as you speak",
+                  },
+                  {
+                    icon: TrendingUp,
+                    title: "Track Progress",
+                    desc: "Monitor your speaking time and conversation streaks",
+                  },
+                  {
+                    icon: Sparkles,
+                    title: "Personalized Learning",
+                    desc: "Conversations adapt to your level and goals",
+                  },
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-start space-x-4">
                     <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -130,11 +137,19 @@ export default function Home() {
               </div>
             </div>
             <div className="bg-gradient-to-br from-primary-500 to-purple-500 rounded-2xl p-8 text-white">
-              <h3 className="text-2xl font-bold mb-4">6 Key Metrics</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {['Clarity', 'Fluency', 'Vocabulary', 'Grammar', 'Confidence', 'Engagement'].map((metric, idx) => (
-                  <div key={idx} className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
-                    <p className="font-semibold">{metric}</p>
+              <h3 className="text-2xl font-bold mb-4">ESL Learning Features</h3>
+              <div className="space-y-3">
+                {[
+                  { title: "🎯 Grammar Corrections", desc: "Fix mistakes as you speak" },
+                  { title: "🗣️ Natural Dialogue", desc: "Conversations like with a real teacher" },
+                  { title: "📚 Vocabulary Building", desc: "Learn new words in context" },
+                  { title: "⏱️ Flexible Pacing", desc: "Take your time between thoughts" },
+                  { title: "📄 Context-Aware", desc: "Upload documents for topic-specific practice" },
+                  { title: "🔄 Daily Practice", desc: "Build speaking confidence through consistency" },
+                ].map((feature, idx) => (
+                  <div key={idx} className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <p className="font-semibold text-sm">{feature.title}</p>
+                    <p className="text-xs opacity-90 mt-1">{feature.desc}</p>
                   </div>
                 ))}
               </div>
@@ -146,13 +161,12 @@ export default function Home() {
       {/* CTA Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="bg-gradient-to-r from-primary-600 to-purple-600 rounded-2xl p-12 text-center text-white">
-          <h2 className="text-3xl font-bold mb-4">
-            Ready to Improve Your Speaking Skills?
-          </h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join learners worldwide using AI to master communication
-          </p>
-          <Link href="/register" className="inline-flex items-center space-x-2 bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+          <h2 className="text-3xl font-bold mb-4">Ready to Improve Your Speaking Skills?</h2>
+          <p className="text-xl mb-8 opacity-90">Join learners worldwide using AI to master communication</p>
+          <Link
+            href="/register"
+            className="inline-flex items-center space-x-2 bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          >
             <span>Get Started Free</span>
             <ArrowRight className="w-5 h-5" />
           </Link>
@@ -167,9 +181,7 @@ export default function Home() {
               <MessageCircle className="w-6 h-6" />
               <span className="text-xl font-bold">XiAv Speech AI</span>
             </div>
-            <p className="text-gray-400">
-              © 2025 XiAv Speech AI. Improve through conversation.
-            </p>
+            <p className="text-gray-400">© 2025 XiAv Speech AI. Improve through conversation.</p>
           </div>
         </div>
       </footer>

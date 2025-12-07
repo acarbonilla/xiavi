@@ -23,16 +23,19 @@
 ### Technology Stack
 
 **Backend:**
+
 - Django 5.0.1 + Django REST Framework 3.14.0
 - PostgreSQL 14+
 - JWT Authentication (djangorestframework-simplejwt)
 
 **Frontend:**
+
 - Next.js 15.5.6 with React Compiler
 - TypeScript
 - Tailwind CSS
 
 **AI Services:**
+
 - Deepgram SDK 5.3.0 (Speech-to-Text)
 - Google Cloud TTS 2.33.0 (Text-to-Speech)
 - Google Gemini 2.0 Flash (Conversational AI)
@@ -78,20 +81,22 @@ backend/
 ### 1. **accounts** - Authentication & User Management
 
 **Models:**
+
 - `CustomUser` - Extended Django user with language levels
 - `LearnerProfile` - Extended profile with progress tracking
 
 **Key Fields:**
+
 - Language level (beginner/intermediate/advanced)
 - Native & target language
 - Preferred AI voice
 - Total conversations & speaking time
 - Current & longest streak
 - Daily goals (minutes, conversations)
-- Skill scores (JSON)
 - Topics covered (JSON)
 
 **API Endpoints:** 9 endpoints
+
 - `POST /api/auth/register/` - User registration
 - `POST /api/auth/login/` - Login (returns JWT tokens)
 - `POST /api/auth/logout/` - Logout
@@ -108,21 +113,23 @@ backend/
 ### 2. **conversations** - Core Learning Engine
 
 **Models:**
+
 - `Topic` - Conversation topics with difficulty levels
 - `ConversationSession` - Individual conversation instances
 - `ConversationMessage` - User and AI messages
-- `ConversationFeedback` - AI-generated analysis
 - `DocumentUpload` - Uploaded documents for RAG (max 5 per session)
 - `DocumentChunk` - Text chunks with 768-dim embeddings
 
 **Session Status:**
+
 - `active` - Currently in progress
 - `incomplete` - Saved for later
-- `completed` - Finished with feedback
+- `completed` - Finished
 
 **API Endpoints:** ~20 endpoints (via ViewSet)
 
 **Standard Endpoints:**
+
 - `GET /api/conversations/topics/` - List topics
 - `GET /api/conversations/sessions/` - List sessions
 - `POST /api/conversations/sessions/` - Create session
@@ -131,11 +138,11 @@ backend/
 - `DELETE /api/conversations/sessions/{id}/` - Delete session
 
 **Custom Actions:**
+
 - `POST /api/conversations/sessions/{id}/start_conversation/` - Start new conversation
 - `GET /api/conversations/sessions/{id}/messages/` - Get messages
 - `POST /api/conversations/sessions/{id}/speak/` - Send audio message
 - `POST /api/conversations/sessions/{id}/end/` - End conversation
-- `GET /api/conversations/sessions/{id}/feedback/` - Get AI feedback
 - `POST /api/conversations/sessions/{id}/mark_incomplete/` - Save for later
 - `POST /api/conversations/sessions/{id}/upload_document/` - Upload PDF/TXT
 - `GET /api/conversations/sessions/{id}/documents/` - List documents
@@ -143,6 +150,7 @@ backend/
 - `GET /api/conversations/sessions/analytics/` - Get progress analytics
 
 **Voice API:**
+
 - `GET /api/conversations/voices/` - List available voices
 - `GET /api/conversations/voices/{id}/` - Get voice details
 
@@ -151,9 +159,11 @@ backend/
 ### 3. **learning** - Vocabulary Builder
 
 **Models:**
+
 - `VocabularyItem` - Words users are learning
 
 **Key Fields:**
+
 - Word, definition, example sentence, translation
 - Mastery level (1-5: New → Expert)
 - Review count, times correct
@@ -161,6 +171,7 @@ backend/
 - Last reviewed date
 
 **API Endpoints:** ~6 endpoints (via ViewSet)
+
 - `GET /api/learning/vocabulary/` - List vocabulary items
 - `POST /api/learning/vocabulary/` - Add new word
 - `GET /api/learning/vocabulary/{id}/` - Get word details
@@ -173,17 +184,21 @@ backend/
 ### 4. **interviews** - Interview Management
 
 **Models:**
+
 - `Interview` - Interview sessions
 - `InterviewQuestion` - Links interviews to questions
 
 **Position Types:**
+
 - Software Engineer, Data Scientist, Product Manager
 - Designer, Marketing, Sales, General
 
 **Interview Status:**
+
 - `pending` → `in_progress` → `completed` → `evaluated`
 
 **API Endpoints:** ~6 endpoints (via ViewSet)
+
 - `GET /api/interviews/` - List interviews
 - `POST /api/interviews/` - Create interview
 - `GET /api/interviews/{id}/` - Get interview details
@@ -196,15 +211,18 @@ backend/
 ### 5. **evaluations** - AI Interview Evaluation
 
 **Models:**
+
 - `Evaluation` - Overall interview evaluation
 - `QuestionEvaluation` - Per-question evaluation
 
 **Scoring Dimensions:**
+
 - Overall score (0-100)
 - Communication, content, confidence, clarity scores
 - Strengths & improvements (text)
 
 **API Endpoints:** ~6 endpoints (via ViewSet)
+
 - `GET /api/evaluations/` - List evaluations
 - `POST /api/evaluations/` - Create evaluation
 - `GET /api/evaluations/{id}/` - Get evaluation details
@@ -217,10 +235,12 @@ backend/
 ### 6. **questions** - Question Bank
 
 **Models:**
+
 - `QuestionCategory` - Categories (Technical, Behavioral, etc.)
 - `Question` - Interview questions
 
 **Question Attributes:**
+
 - Difficulty (easy, medium, hard)
 - Position type
 - Time limit (seconds)
@@ -230,6 +250,7 @@ backend/
 **API Endpoints:** ~12 endpoints (2 ViewSets)
 
 **Questions:**
+
 - `GET /api/questions/` - List questions
 - `POST /api/questions/` - Create question
 - `GET /api/questions/{id}/` - Get question details
@@ -238,6 +259,7 @@ backend/
 - `PATCH /api/questions/{id}/` - Partial update
 
 **Categories:**
+
 - `GET /api/questions/categories/` - List categories
 - `POST /api/questions/categories/` - Create category
 - `GET /api/questions/categories/{id}/` - Get category
@@ -250,13 +272,16 @@ backend/
 ### 7. **responses** - Video Responses
 
 **Models:**
+
 - `VideoResponse` - Video answers to interview questions
 - `Transcript` - AI-generated transcripts
 
 **Response Status:**
+
 - `uploading` → `processing` → `completed` / `failed`
 
 **API Endpoints:** ~6 endpoints (via ViewSet)
+
 - `GET /api/responses/` - List responses
 - `POST /api/responses/` - Upload video response
 - `GET /api/responses/{id}/` - Get response details
@@ -269,11 +294,13 @@ backend/
 ### 8. **training** - Practice & Scenarios
 
 **Models:**
+
 - `TrainingSession` - Practice sessions
 - `TrainingFeedback` - Instant AI feedback
 - `Scenario` - Structured roleplay scenarios
 
 **Scenario Components:**
+
 - Title, description, difficulty
 - System prompt for AI
 - Initial AI message
@@ -283,6 +310,7 @@ backend/
 **API Endpoints:** ~18 endpoints (3 ViewSets)
 
 **Sessions:**
+
 - `GET /api/training/sessions/` - List sessions
 - `POST /api/training/sessions/` - Create session
 - `GET /api/training/sessions/{id}/` - Get session
@@ -291,6 +319,7 @@ backend/
 - `PATCH /api/training/sessions/{id}/` - Partial update
 
 **Feedback:**
+
 - `GET /api/training/feedback/` - List feedback
 - `POST /api/training/feedback/` - Submit feedback
 - `GET /api/training/feedback/{id}/` - Get feedback
@@ -299,6 +328,7 @@ backend/
 - `PATCH /api/training/feedback/{id}/` - Partial update
 
 **Scenarios:**
+
 - `GET /api/training/scenarios/` - List scenarios
 - `POST /api/training/scenarios/` - Create scenario
 - `GET /api/training/scenarios/{id}/` - Get scenario
@@ -318,17 +348,17 @@ Shared utilities and base classes used across apps.
 
 ### Total API Endpoints: **~95+ endpoints**
 
-| Module | Endpoints | Type |
-|--------|-----------|------|
-| **accounts** | 9 | Standard views |
-| **conversations** | ~20 | ViewSet + custom actions |
-| **learning** | ~6 | ViewSet |
-| **interviews** | ~6 | ViewSet |
-| **evaluations** | ~6 | ViewSet |
-| **questions** | ~12 | 2 ViewSets |
-| **responses** | ~6 | ViewSet |
-| **training** | ~18 | 3 ViewSets |
-| **voices** | ~6 | ViewSet |
+| Module            | Endpoints | Type                     |
+| ----------------- | --------- | ------------------------ |
+| **accounts**      | 9         | Standard views           |
+| **conversations** | ~20       | ViewSet + custom actions |
+| **learning**      | ~6        | ViewSet                  |
+| **interviews**    | ~6        | ViewSet                  |
+| **evaluations**   | ~6        | ViewSet                  |
+| **questions**     | ~12       | 2 ViewSets               |
+| **responses**     | ~6        | ViewSet                  |
+| **training**      | ~18       | 3 ViewSets               |
+| **voices**        | ~6        | ViewSet                  |
 
 **Note:** ViewSets automatically generate standard REST endpoints (list, create, retrieve, update, partial_update, destroy).
 
@@ -430,6 +460,7 @@ All AI and external service integrations are located in the `services/` director
 **Purpose:** Core AI conversation engine with Retrieval Augmented Generation
 
 **Key Features:**
+
 - Google Gemini 2.0 Flash integration
 - RAG (Retrieval Augmented Generation) support
 - Context-aware responses using uploaded documents
@@ -437,10 +468,11 @@ All AI and external service integrations are located in the `services/` director
 - Prompt engineering for natural conversations
 
 **Main Functions:**
+
 ```python
 class GeminiService:
     def __init__(self, api_key: str)
-    
+
     # Generate AI response with optional RAG context
     def generate_response(
         self,
@@ -449,14 +481,7 @@ class GeminiService:
         session_context: dict,
         document_chunks: list = None  # RAG chunks
     ) -> dict
-    
-    # Generate conversation feedback
-    def generate_feedback(
-        self,
-        messages: list,
-        session_duration: int
-    ) -> dict
-    
+
     # Generate vocabulary suggestions
     def suggest_vocabulary(
         self,
@@ -466,6 +491,7 @@ class GeminiService:
 ```
 
 **Prompt Features:**
+
 - Slower-paced conversations (max 1 question per response)
 - Warmer, more encouraging tone
 - Active listening before questioning
@@ -479,6 +505,7 @@ class GeminiService:
 **Purpose:** Process uploaded documents and create vector embeddings for RAG
 
 **Key Features:**
+
 - PDF text extraction (PyPDF2 + pdfplumber)
 - TXT file processing with encoding detection
 - Text chunking with overlap
@@ -486,10 +513,11 @@ class GeminiService:
 - Cosine similarity search
 
 **Main Functions:**
+
 ```python
 class DocumentProcessor:
     def __init__(self, api_key: str)
-    
+
     # Process uploaded document
     def process_document(
         self,
@@ -497,14 +525,14 @@ class DocumentProcessor:
         file_type: str,
         session_id: int
     ) -> dict
-    
+
     # Create text chunks with embeddings
     def create_chunks(
         self,
         text: str,
         document_id: int
     ) -> list
-    
+
     # Retrieve relevant chunks for RAG
     def retrieve_chunks(
         self,
@@ -512,7 +540,7 @@ class DocumentProcessor:
         session_id: int,
         top_k: int = 5
     ) -> list
-    
+
     # Calculate cosine similarity
     def cosine_similarity(
         self,
@@ -522,6 +550,7 @@ class DocumentProcessor:
 ```
 
 **Configuration:**
+
 - Chunk size: 800 tokens (~3200 chars)
 - Chunk overlap: 100 tokens (~400 chars)
 - Max documents per session: 5
@@ -535,16 +564,18 @@ class DocumentProcessor:
 **Purpose:** Convert user audio to text transcripts
 
 **Key Features:**
+
 - Deepgram SDK 5.3.0 integration
 - Real-time streaming transcription
 - High accuracy English transcription
 - Audio file support (WAV, MP3, WEBM, etc.)
 
 **Main Functions:**
+
 ```python
 class DeepgramService:
     def __init__(self, api_key: str)
-    
+
     # Transcribe audio file to text
     def transcribe_audio(
         self,
@@ -553,6 +584,7 @@ class DeepgramService:
 ```
 
 **Response Format:**
+
 ```python
 {
     "transcript": "user's spoken text",
@@ -569,16 +601,18 @@ class DeepgramService:
 **Purpose:** Convert AI text responses to natural speech
 
 **Key Features:**
+
 - Google Cloud TTS integration
 - Multiple voice options (4 voices)
 - Natural-sounding speech synthesis
 - MP3 audio output
 
 **Main Functions:**
+
 ```python
 class GoogleTTSService:
     def __init__(self, credentials_path: str)
-    
+
     # Convert text to speech
     def synthesize_speech(
         self,
@@ -588,6 +622,7 @@ class GoogleTTSService:
 ```
 
 **Available Voices:**
+
 1. `en-US-Standard-F` - Light & Cheerful (Female)
 2. `en-US-Standard-C` - Warm & Friendly (Female)
 3. `en-US-Standard-D` - Professional (Male)
@@ -600,6 +635,7 @@ class GoogleTTSService:
 **Purpose:** Centralized voice configuration and settings
 
 **Constants:**
+
 ```python
 VOICE_CHOICES = [
     ('light_cheerful', 'Light & Cheerful'),
@@ -625,24 +661,26 @@ VOICE_MAPPING = {
 **Purpose:** Track user progress toward daily goals
 
 **Key Features:**
+
 - Daily conversation count tracking
 - Speaking time tracking
 - Streak calculation
 - Goal achievement analytics
 
 **Main Functions:**
+
 ```python
 class GoalTracker:
     # Check daily goal status
     def get_daily_status(self, user_id: int) -> dict
-    
+
     # Update progress after conversation
     def update_progress(
         self,
         user_id: int,
         speaking_time: int
     ) -> dict
-    
+
     # Calculate streak
     def calculate_streak(
         self,
@@ -690,7 +728,7 @@ graph TB
     C --> D[Create chunks]
     D --> E[Generate embeddings]
     E --> F[Store in DB]
-    
+
     G[User asks question] --> H[Deepgram STT]
     H --> I[Embed question]
     I --> J[Retrieve relevant chunks]
@@ -700,34 +738,22 @@ graph TB
     M --> N[Audio playback]
 ```
 
-### 3. Feedback Generation
-
-```mermaid
-graph LR
-    A[Conversation ends] --> B[Collect messages]
-    B --> C[Gemini AI analysis]
-    C --> D[Generate scores]
-    D --> E[Vocabulary suggestions]
-    E --> F[Store feedback]
-    F --> G[Display to user]
-```
-
 ---
 
 ## 📈 Database Schema Summary
 
 ### Total Models: 19 models across 9 apps
 
-| App | Models |
-|-----|--------|
-| **accounts** | CustomUser, LearnerProfile |
-| **conversations** | Topic, ConversationSession, ConversationMessage, ConversationFeedback, DocumentUpload, DocumentChunk |
-| **learning** | VocabularyItem |
-| **interviews** | Interview, InterviewQuestion |
-| **evaluations** | Evaluation, QuestionEvaluation |
-| **questions** | QuestionCategory, Question |
-| **responses** | VideoResponse, Transcript |
-| **training** | TrainingSession, TrainingFeedback, Scenario |
+| App               | Models                                                                         |
+| ----------------- | ------------------------------------------------------------------------------ |
+| **accounts**      | CustomUser, LearnerProfile                                                     |
+| **conversations** | Topic, ConversationSession, ConversationMessage, DocumentUpload, DocumentChunk |
+| **learning**      | VocabularyItem                                                                 |
+| **interviews**    | Interview, InterviewQuestion                                                   |
+| **evaluations**   | Evaluation, QuestionEvaluation                                                 |
+| **questions**     | QuestionCategory, Question                                                     |
+| **responses**     | VideoResponse, Transcript                                                      |
+| **training**      | TrainingSession, TrainingFeedback, Scenario                                    |
 
 ---
 
@@ -736,11 +762,13 @@ graph LR
 **Method:** JWT (JSON Web Tokens)
 
 **Endpoints:**
+
 - Login returns access token (15 min) + refresh token (1 day)
 - All API endpoints require `Authorization: Bearer <token>`
 - Refresh token used to get new access token
 
 **Permissions:**
+
 - All endpoints require authentication (`IsAuthenticated`)
 - Users can only access their own data
 - Admin panel requires staff/superuser status
@@ -814,6 +842,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 ### Running the Application
 
 **Backend:**
+
 ```bash
 cd backend
 python manage.py runserver
@@ -821,6 +850,7 @@ python manage.py runserver
 ```
 
 **Frontend:**
+
 ```bash
 cd frontend
 npm run dev

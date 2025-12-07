@@ -12,13 +12,15 @@ An AI-powered platform for improving English communication skills through natura
 ## 🚀 Core Features
 
 ### Conversation Features
+
 - **AI Conversations**: Natural dialogue with Google Gemini 2.0 Flash AI
 - **Voice Activity Detection (VAD)**: Automatic pause detection (configurable 1-8 seconds)
 - **Document-Aware AI (RAG)**: Upload up to 5 documents per session for informed conversations
 - **Real-time Audio Visualization**: See your voice levels while speaking
-- **Smart Feedback**: Detailed 6-dimension analysis of communication skills
+- **Real-time Grammar Corrections**: AI acts as an ESL teacher, providing immediate feedback during conversation
 
 ### Technical Capabilities
+
 - **Speech-to-Text**: Real-time transcription via Deepgram
 - **Text-to-Speech**: Natural AI voice responses via Google Cloud TTS
 - **Progress Tracking**: Monitor improvement over time with streaks and scores
@@ -27,6 +29,7 @@ An AI-powered platform for improving English communication skills through natura
 ## 🛠️ Tech Stack
 
 ### Backend
+
 - **Framework**: Django 5.0.1 + Django REST Framework 3.14.0
 - **Database**: PostgreSQL 14+
 - **Authentication**: JWT (djangorestframework-simplejwt)
@@ -41,6 +44,7 @@ An AI-powered platform for improving English communication skills through natura
   - numpy 1.26.4 - Vector similarity calculations
 
 ### Frontend
+
 - **Framework**: Next.js 15.5.6 with React Compiler
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS with custom design system
@@ -59,6 +63,7 @@ An AI-powered platform for improving English communication skills through natura
 ## 🔧 Backend Setup
 
 ### 1. Create Virtual Environment
+
 ```bash
 cd backend
 python -m venv venv
@@ -67,11 +72,13 @@ venv\Scripts\activate  # Windows
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 **Key Dependencies:**
+
 ```
 Django==5.0.1
 djangorestframework==3.14.0
@@ -85,7 +92,9 @@ charset-normalizer==3.4.0
 ```
 
 ### 3. Configure Environment
+
 Create `backend/.env`:
+
 ```env
 # Django
 SECRET_KEY=your-django-secret-key
@@ -112,6 +121,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 ```
 
 ### 4. Database Setup
+
 ```bash
 # Create database
 createdb xiav_speech_ai
@@ -124,9 +134,11 @@ python manage.py createsuperuser
 ```
 
 ### 5. Load Initial Topics
+
 ```bash
 python manage.py shell
 ```
+
 ```python
 from apps.conversations.models import Topic
 
@@ -143,34 +155,42 @@ for topic_data in topics:
 ```
 
 ### 6. Run Development Server
+
 ```bash
 python manage.py runserver
 ```
+
 Backend available at: `http://localhost:8000`
 
 ## 🎨 Frontend Setup
 
 ### 1. Install Dependencies
+
 ```bash
 cd frontend
 npm install
 ```
 
 ### 2. Configure Environment
+
 Create `frontend/.env.local`:
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ### 3. Run Development Server
+
 ```bash
 npm run dev
 ```
+
 Frontend available at: `http://localhost:3000`
 
 ## 📚 API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/register/` - User registration
 - `POST /api/auth/login/` - Login (returns JWT access + refresh tokens)
 - `POST /api/auth/logout/` - Logout
@@ -178,6 +198,7 @@ Frontend available at: `http://localhost:3000`
 - `GET /api/auth/profile/` - Get user profile with learner stats
 
 ### Conversations
+
 - `GET /api/conversations/topics/` - List available topics
 - `GET /api/conversations/sessions/` - List user's conversation sessions
 - `POST /api/conversations/sessions/` - Start new conversation
@@ -185,14 +206,15 @@ Frontend available at: `http://localhost:3000`
 - `GET /api/conversations/sessions/{id}/messages/` - Get conversation messages
 - `POST /api/conversations/sessions/{id}/speak/` - Send audio message
 - `POST /api/conversations/sessions/{id}/end/` - End conversation
-- `GET /api/conversations/sessions/{id}/feedback/` - Get AI feedback
 
 ### Document Upload (RAG)
+
 - `GET /api/conversations/sessions/{id}/documents/` - List uploaded documents
 - `POST /api/conversations/sessions/{id}/documents/upload/` - Upload PDF/TXT
 - `DELETE /api/conversations/sessions/{id}/documents/{doc_id}/` - Delete document
 
 **Document Limits:**
+
 - Max 5 documents per session
 - Max 10MB per file
 - Supported: PDF, TXT
@@ -201,9 +223,10 @@ Frontend available at: `http://localhost:3000`
 ## 🎯 How It Works
 
 ### Standard Conversation Flow
+
 1. **Choose Topic**: Select from 5 topics (3 difficulty levels)
 2. **AI Opens**: Receives warm, welcoming opening message
-3. **Voice Recording**: 
+3. **Voice Recording**:
    - Manual: Click mic, speak, click stop
    - Auto (VAD): Click mic, speak, AI detects silence and auto-sends
 4. **Processing**:
@@ -214,6 +237,7 @@ Frontend available at: `http://localhost:3000`
 6. **End & Analyze**: Get detailed 6-metric feedback
 
 ### RAG-Enhanced Conversations
+
 1. **Upload Documents**: Add PDFs/TXT files to session (up to 5)
 2. **Processing**: Documents are chunked and embedded (Gemini embeddings)
 3. **Contextual Responses**: AI retrieves relevant chunks (cosine similarity)
@@ -221,6 +245,7 @@ Frontend available at: `http://localhost:3000`
 5. **Source Attribution**: See which documents were referenced
 
 ### Voice Activity Detection
+
 - **15% Silence Threshold**: Detects when you stop speaking
 - **Visual Countdown**: Shows remaining time before auto-send
 - **Configurable Duration**: Adjust from 1-8 seconds in settings
@@ -261,6 +286,7 @@ XiAvSpeechAI/
 ## 📊 Database Models
 
 ### Core Models
+
 - **User**: Authentication + language preferences
 - **LearnerProfile**: Progress tracking (conversations, speaking time, streaks, skill scores, topics covered)
 - **Topic**: Conversation topics with difficulty levels (beginner/intermediate/advanced)
@@ -269,6 +295,7 @@ XiAvSpeechAI/
 - **ConversationFeedback**: AI-generated analysis with 6-dimension scores
 
 ### RAG Models
+
 - **DocumentUpload**: Uploaded PDF/TXT files (max 5 per session)
 - **DocumentChunk**: Text chunks with 768-dim embeddings for similarity search
 
@@ -276,26 +303,28 @@ XiAvSpeechAI/
 
 The AI analyzes conversations across 6 dimensions (0-100):
 
-| Metric | Description |
-|--------|-------------|
-| **Clarity** | Pronunciation and understandability |
-| **Fluency** | Speaking smoothness and natural pace |
+| Metric         | Description                              |
+| -------------- | ---------------------------------------- |
+| **Clarity**    | Pronunciation and understandability      |
+| **Fluency**    | Speaking smoothness and natural pace     |
 | **Vocabulary** | Word choice richness and appropriateness |
-| **Grammar** | Grammatical accuracy |
-| **Confidence** | Speaking confidence and assertiveness |
-| **Engagement** | Active participation in conversation |
+| **Grammar**    | Grammatical accuracy                     |
+| **Confidence** | Speaking confidence and assertiveness    |
+| **Engagement** | Active participation in conversation     |
 
 **Overall Score**: Average of all 6 metrics
 
 ## 🧪 Testing
 
 ### Backend Tests
+
 ```bash
 cd backend
 python manage.py test
 ```
 
 ### Frontend Build
+
 ```bash
 cd frontend
 npm run build
@@ -306,6 +335,7 @@ npm run build
 ### Common Issues
 
 **1. `ModuleNotFoundError: No module named 'numpy'`**
+
 ```bash
 # Ensure you're in the virtual environment
 cd backend
@@ -314,6 +344,7 @@ pip install -r requirements.txt
 ```
 
 **2. Webpack Error on Frontend Refresh**
+
 ```powershell
 # Clear Next.js cache
 cd frontend
@@ -322,11 +353,13 @@ npm run dev
 ```
 
 **3. Google TTS Authentication Error**
+
 - Ensure `google-tts-key.json` exists in `backend/`
 - Verify service account has "Cloud Text-to-Speech API User" role
 - Check `GOOGLE_APPLICATION_CREDENTIALS` in `.env`
 
 **4. Deepgram Connection Issues**
+
 - Verify API key in `.env`
 - Check network/firewall settings
 - Ensure sufficient API credits
@@ -334,13 +367,16 @@ npm run dev
 ## 📝 Development Notes
 
 ### Recent Enhancements (Nov 2025)
+
 1. **AI Engagement Improvements**:
+
    - Enhanced prompts for slower pacing
    - Active listening before questioning
    - Max 1 question per response
    - Warmer, more encouraging tone
 
 2. **Voice Activity Detection**:
+
    - 15% audio level threshold
    - Visual countdown indicator
    - Configurable pause duration (1-8s)
@@ -354,11 +390,13 @@ npm run dev
 ### Configuration Options
 
 **Voice Detection Settings** (Frontend):
+
 - `SILENCE_THRESHOLD`: 15% audio level
 - `silenceDuration`: Default 4000ms (4 seconds)
 - Adjustable range: 1000-8000ms
 
 **Document Processing** (Backend):
+
 - `CHUNK_SIZE`: 800 tokens (~3200 chars)
 - `CHUNK_OVERLAP`: 100 tokens (~400 chars)
 - `MAX_DOCUMENTS_PER_SESSION`: 5
@@ -375,6 +413,7 @@ This is an educational project. Contributions welcome!
 ## 📞 Support
 
 For issues or questions, please check:
+
 1. This README
 2. Backend setup guide: `backend/SETUP.md`
 3. Frontend documentation
