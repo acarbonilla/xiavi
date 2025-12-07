@@ -17,6 +17,20 @@ class GoogleTTSService:
         if settings.GOOGLE_APPLICATION_CREDENTIALS:
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = settings.GOOGLE_APPLICATION_CREDENTIALS
         
+        # Check if credentials file exists
+        creds_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+        if creds_path and not os.path.exists(creds_path):
+            raise FileNotFoundError(
+                f"Google TTS credentials file not found at: {creds_path}. "
+                "Please ensure GOOGLE_APPLICATION_CREDENTIALS points to a valid JSON key file."
+            )
+        
+        if not creds_path:
+            raise ValueError(
+                "GOOGLE_APPLICATION_CREDENTIALS is not set. "
+                "Please set it in your .env file to use Google TTS."
+            )
+        
         self.client = texttospeech.TextToSpeechClient()
     
     def generate_speech(self, text, output_path=None, language_code='en-US', voice_name='en-US-Neural2-F'):

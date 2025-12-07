@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { ConversationSession, ConversationMessage } from '@/types';
-import { Mic, MicOff, Send, X, Loader2, MessageCircle, ArrowLeft, Settings } from 'lucide-react';
+import { Mic, MicOff, Send, X, Loader2, MessageCircle, ArrowLeft, Settings, FileText } from 'lucide-react';
 import Link from 'next/link';
+import DocumentUpload from '@/components/DocumentUpload';
 
 export default function ConversationPage() {
     const params = useParams();
@@ -18,19 +19,30 @@ export default function ConversationPage() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const [error, setError] = useState('');
+    const [silenceTimer, setSilenceTimer] = useState<number | null>(null);
     const [useVAD, setUseVAD] = useState(true); // Voice Activity Detection enabled by default
     const [silenceDuration, setSilenceDuration] = useState(4000); // 4 seconds for ESL learners
     const [showSettings, setShowSettings] = useState(false);
+    const [showDocuments, setShowDocuments] = useState(false);
     const [audioLevel, setAudioLevel] = useState(0); // Audio level for mic meter (0-100)
+    const [sensitivity, setSensitivity] = useState(1.5); // Threshold multiplier (0.5-3.0)
+    const [isSpeaking, setIsSpeaking] = useState(false); // Track if user is speaking
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const recordingTimeRef = useRef(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const vadCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const smoothedLevelRef = useRef(0);
+    const silenceStartTimeRef = useRef<number | null>(null);
+    const sensitivityRef = useRef(1.5);
+    const useVADRef = useRef(true);
+    const silenceDurationRef = useRef(4000);
+    const isSpeakingRef = useRef(false);
 
     useEffect(() => {
         fetchSession();
@@ -40,6 +52,11 @@ export default function ConversationPage() {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    // Keep refs in sync with state to avoid closure issues
+    useEffect(() => { sensitivityRef.current = sensitivity; }, [sensitivity]);
+    useEffect(() => { useVADRef.current = useVAD; }, [useVAD]);
+    useEffect(() => { silenceDurationRef.current = silenceDuration; }, [silenceDuration]);
 
     const fetchSession = async () => {
         try {
@@ -69,25 +86,52 @@ export default function ConversationPage() {
 
         // Calculate average volume
         const average = dataArray.reduce((a, b) => a + b) / bufferLength;
-        const threshold = 10; // Silence threshold (adjust if needed)
+        const rawLevel = Math.min(100, (average / 128) * 100);
 
-        // Update audio level for visual meter (normalize to 0-100)
-        const normalizedLevel = Math.min(100, (average / 128) * 100);
-        setAudioLevel(normalizedLevel);
+        // Apply smoothing to reduce jitter
+        const SMOOTHING = 0.3;
+        smoothedLevelRef.current = (SMOOTHING * rawLevel) + ((1 - SMOOTHING) * smoothedLevelRef.current);
+        const smoothedLevel = smoothedLevelRef.current;
 
-        if (average < threshold) {
-            // Silence detected - start countdown if not already started
-            if (!silenceTimeoutRef.current && useVAD) {
-                silenceTimeoutRef.current = setTimeout(() => {
-                    console.log('Auto-stopping due to silence');
-                    stopRecording();
-                }, silenceDuration);
+        // Update visual meter
+        setAudioLevel(smoothedLevel);
+
+        // Calculate threshold based on sensitivity
+        // sensitivity 0.5 = 7.5% threshold (very sensitive)
+        // sensitivity 1.5 = 22.5% threshold (balanced)
+        // sensitivity 3.0 = 45% threshold (less sensitive)
+        const BASE_THRESHOLD = 15;
+        const speechThreshold = BASE_THRESHOLD * sensitivityRef.current;
+        const silenceThreshold = speechThreshold * 0.7; // Lower threshold for silence
+
+        // Track speaking state
+        if (smoothedLevel > speechThreshold) {
+            // Speech detected
+            isSpeakingRef.current = true;
+            setIsSpeaking(true);
+
+            // Reset silence timer
+            if (silenceStartTimeRef.current) {
+                silenceStartTimeRef.current = null;
+                setSilenceTimer(null);
             }
-        } else {
-            // Sound detected - reset silence timer
-            if (silenceTimeoutRef.current) {
-                clearTimeout(silenceTimeoutRef.current);
-                silenceTimeoutRef.current = null;
+        } else if (smoothedLevel < silenceThreshold && isSpeakingRef.current) {
+            // Silence after speech - start countdown
+            if (useVADRef.current) {
+                if (!silenceStartTimeRef.current) {
+                    silenceStartTimeRef.current = Date.now();
+                }
+
+                const elapsed = Date.now() - silenceStartTimeRef.current;
+                const remaining = Math.max(0, silenceDurationRef.current - elapsed);
+                setSilenceTimer(remaining);
+
+                if (remaining === 0) {
+                    console.log('✅ Auto-stopping due to silence');
+                    stopRecording();
+                    isSpeakingRef.current = false;
+                    setIsSpeaking(false);
+                }
             }
         }
     };
@@ -106,6 +150,13 @@ export default function ConversationPage() {
             analyserRef.current.fftSize = 2048;
             source.connect(analyserRef.current);
 
+            // Initialize VAD state
+            smoothedLevelRef.current = 0;
+            isSpeakingRef.current = false;
+            setIsSpeaking(false);
+            silenceStartTimeRef.current = null;
+            setSilenceTimer(null);
+
             // Check audio level every 100ms (for VAD and visual meter)
             vadCheckIntervalRef.current = setInterval(detectSilence, 100);
 
@@ -117,7 +168,7 @@ export default function ConversationPage() {
 
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-                await sendAudioMessage(audioBlob, recordingTime);
+                await sendAudioMessage(audioBlob, recordingTimeRef.current);
                 stream.getTracks().forEach(track => track.stop());
 
                 // Clean up VAD
@@ -136,9 +187,11 @@ export default function ConversationPage() {
             mediaRecorder.start();
             setIsRecording(true);
             setRecordingTime(0);
+            recordingTimeRef.current = 0;
 
             recordingIntervalRef.current = setInterval(() => {
                 setRecordingTime(prev => prev + 1);
+                recordingTimeRef.current += 1;
             }, 1000);
         } catch (error) {
             console.error('Error starting recording:', error);
@@ -150,7 +203,9 @@ export default function ConversationPage() {
         if (mediaRecorderRef.current && isRecording) {
             mediaRecorderRef.current.stop();
             setIsRecording(false);
-            setAudioLevel(0); // Reset audio level meter
+            setAudioLevel(0);
+            setIsSpeaking(false);
+            isSpeakingRef.current = false;
             if (recordingIntervalRef.current) {
                 clearInterval(recordingIntervalRef.current);
             }
@@ -160,13 +215,13 @@ export default function ConversationPage() {
     const sendAudioMessage = async (audioBlob: Blob, duration: number) => {
         setIsProcessing(true);
         setError(''); // Clear any previous errors
-        
+
         try {
             // Check if blob is empty
             if (audioBlob.size === 0) {
                 throw new Error('Audio recording is empty. Please ensure your microphone is working.');
             }
-            
+
             console.log(`Sending audio message: ${audioBlob.size} bytes, ${duration}s duration`);
             const response = await api.sendAudioMessage(sessionId, audioBlob, duration);
 
@@ -198,16 +253,16 @@ export default function ConversationPage() {
             }
         } catch (error: any) {
             console.error('Error sending audio:', error);
-            
+
             // Extract error message from response
             let errorMessage = 'Failed to send message';
-            
+
             if (error.response?.data?.error) {
                 errorMessage = error.response.data.error;
             } else if (error.message) {
                 errorMessage = error.message;
             }
-            
+
             setError(errorMessage);
         } finally {
             setIsProcessing(false);
@@ -245,16 +300,22 @@ export default function ConversationPage() {
 
     if (!session) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <div className="min-h-screen bg-gradient-to-br from-amber-50/30 via-white to-white flex items-center justify-center">
+                <div className="text-center">
+                    <div className="relative w-20 h-20 mx-auto mb-6">
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary-500 to-purple-500 opacity-75 animate-ping"></div>
+                        <div className="relative w-20 h-20 rounded-full bg-gradient-to-r from-primary-600 to-purple-600 animate-spin" style={{ borderTopColor: 'transparent', borderWidth: '4px' }}></div>
+                    </div>
+                    <p className="text-gray-600 font-medium">Loading conversation...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="min-h-screen bg-gradient-to-br from-amber-50/30 via-white to-white flex flex-col">
             {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-4 py-4">
+            <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-4 shadow-sm sticky top-0 z-10">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                         <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
@@ -269,8 +330,21 @@ export default function ConversationPage() {
                     </div>
                     <div className="flex items-center space-x-2">
                         <button
-                            onClick={() => setShowSettings(!showSettings)}
-                            className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+                            onClick={() => {
+                                setShowDocuments(!showDocuments);
+                                setShowSettings(false);
+                            }}
+                            className={`p-2 rounded-lg hover:bg-gray-100 ${showDocuments ? 'text-primary-600 bg-primary-50' : 'text-gray-600'}`}
+                            title="Documents"
+                        >
+                            <FileText className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowSettings(!showSettings);
+                                setShowDocuments(false);
+                            }}
+                            className={`p-2 rounded-lg hover:bg-gray-100 ${showSettings ? 'text-primary-600 bg-primary-50' : 'text-gray-600'}`}
                         >
                             <Settings className="w-5 h-5" />
                         </button>
@@ -282,6 +356,22 @@ export default function ConversationPage() {
                         </button>
                     </div>
                 </div>
+
+                {/* Documents Panel */}
+                {showDocuments && (
+                    <div className="max-w-4xl mx-auto mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-gray-900">Conversation Documents</h3>
+                            <button
+                                onClick={() => setShowDocuments(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <DocumentUpload sessionId={sessionId} />
+                    </div>
+                )}
 
                 {/* Settings Panel */}
                 {showSettings && (
@@ -329,9 +419,38 @@ export default function ConversationPage() {
                                     <span>4s (ESL Friendly)</span>
                                     <span>8s (Thoughtful)</span>
                                 </div>
+
                                 <p className="text-xs text-gray-600 mt-2">
                                     💡 Tip: ESL learners typically need 3-5 seconds between thoughts
                                 </p>
+
+                                {/* Sensitivity Slider */}
+                                <div className="mb-4 pt-4 border-t border-gray-200">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="font-medium text-gray-900">Microphone Sensitivity</label>
+                                        <span className="text-sm font-semibold text-primary-600">
+                                            {sensitivity.toFixed(1)}x
+                                        </span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0.5"
+                                        max="3.0"
+                                        step="0.1"
+                                        value={sensitivity}
+                                        onChange={(e) => setSensitivity(parseFloat(e.target.value))}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                                    />
+                                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                        <span>0.5x (Very Sensitive)</span>
+                                        <span>1.5x (Balanced)</span>
+                                        <span>3.0x (Less Sensitive)</span>
+                                    </div>
+                                    <p className="text-xs text-gray-600 mt-2">
+                                        💡 Lower = picks up quieter sounds (may trigger on noise)<br />
+                                        Higher = requires louder speech (better for noisy environments)
+                                    </p>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -352,33 +471,58 @@ export default function ConversationPage() {
                         </div>
                     )}
 
-                    {messages.map((message) => (
+                    {messages.map((message, index) => (
                         <div
                             key={message.id}
-                            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} ${message.role === 'user' ? 'animate-slide-in-right' : 'animate-slide-in-left'
+                                }`}
+                            style={{ animationDelay: `${index * 0.05}s` }}
                         >
                             <div
-                                className={`max-w-[70%] rounded-2xl px-4 py-3 ${message.role === 'user'
-                                    ? 'bg-primary-600 text-white'
+                                className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-md hover:shadow-lg transition-all duration-300 ${message.role === 'user'
+                                    ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white'
                                     : 'bg-white border border-gray-200 text-gray-900'
                                     }`}
                             >
-                                <p className="text-sm">{message.text}</p>
+                                <p className="text-sm leading-relaxed">{message.text}</p>
                                 {message.duration > 0 && (
-                                    <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-primary-100' : 'text-gray-500'}`}>
-                                        {formatTime(message.duration)}
-                                    </p>
+                                    <div className="mt-2">
+                                        {message.audio_file && (
+                                            <audio
+                                                controls
+                                                src={message.audio_file}
+                                                className="w-full h-8 mb-1"
+                                                style={{ maxWidth: '240px' }}
+                                            />
+                                        )}
+                                        <p className={`text-xs ${message.role === 'user' ? 'text-primary-100' : 'text-gray-500'}`}>
+                                            {formatTime(message.duration)}
+                                        </p>
+                                    </div>
                                 )}
                             </div>
                         </div>
                     ))}
 
                     {isProcessing && (
-                        <div className="flex justify-start">
-                            <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3">
-                                <div className="flex items-center space-x-2">
-                                    <Loader2 className="w-4 h-4 animate-spin text-primary-600" />
-                                    <p className="text-sm text-gray-600">AI is thinking...</p>
+                        <div className="flex justify-start animate-slide-in-left">
+                            <div className="bg-white border border-gray-200 rounded-2xl px-4 py-4 shadow-md">
+                                <div className="flex items-center space-x-3">
+                                    {/* Animated thinking dots */}
+                                    <div className="flex items-center space-x-1">
+                                        <div className="typing-dot"></div>
+                                        <div className="typing-dot"></div>
+                                        <div className="typing-dot"></div>
+                                    </div>
+                                    <p className="text-sm text-gray-600 font-medium">AI is thinking...</p>
+                                </div>
+                                {/* Audio wave visualization */}
+                                <div className="audio-wave mt-2">
+                                    <div className="audio-wave-bar" style={{ height: '12px' }}></div>
+                                    <div className="audio-wave-bar" style={{ height: '20px' }}></div>
+                                    <div className="audio-wave-bar" style={{ height: '16px' }}></div>
+                                    <div className="audio-wave-bar" style={{ height: '24px' }}></div>
+                                    <div className="audio-wave-bar" style={{ height: '14px' }}></div>
                                 </div>
                             </div>
                         </div>
@@ -404,27 +548,30 @@ export default function ConversationPage() {
                         {!isRecording && !isProcessing && (
                             <button
                                 onClick={startRecording}
-                                className="w-16 h-16 bg-primary-600 hover:bg-primary-700 rounded-full flex items-center justify-center transition-all transform hover:scale-110 shadow-lg"
+                                className="w-20 h-20 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 rounded-full flex items-center justify-center transition-all transform hover:scale-110 shadow-xl hover:shadow-2xl animate-pulse-ring"
                             >
-                                <Mic className="w-8 h-8 text-white" />
+                                <Mic className="w-9 h-9 text-white drop-shadow-md" />
                             </button>
                         )}
 
                         {isRecording && (
                             <>
-                                <div className="flex items-center space-x-4">
-                                    <div className="flex items-center space-x-2">
-                                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                                        <span className="text-lg font-mono font-semibold text-gray-900">
+                                <div className="flex items-center space-x-6">
+                                    <div className="flex items-center space-x-3 bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-md">
+                                        <div className="relative flex items-center">
+                                            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                                            <div className="absolute w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+                                        </div>
+                                        <span className="text-xl font-mono font-bold text-gray-900">
                                             {formatTime(recordingTime)}
                                         </span>
                                     </div>
                                     {!useVAD && (
                                         <button
                                             onClick={stopRecording}
-                                            className="w-16 h-16 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center transition-all shadow-lg"
+                                            className="w-16 h-16 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-full flex items-center justify-center transition-all shadow-xl hover:scale-110 animate-glow"
                                         >
-                                            <MicOff className="w-8 h-8 text-white" />
+                                            <MicOff className="w-8 h-8 text-white drop-shadow-md" />
                                         </button>
                                     )}
                                 </div>
@@ -432,9 +579,12 @@ export default function ConversationPage() {
                         )}
 
                         {isProcessing && (
-                            <div className="flex items-center space-x-2">
-                                <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
-                                <span className="text-gray-600">Processing...</span>
+                            <div className="flex flex-col items-center space-y-3 animate-slide-up">
+                                <div className="relative">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600"></div>
+                                    <div className="absolute inset-0 animate-ping rounded-full border-4 border-primary-400 opacity-20"></div>
+                                </div>
+                                <span className="text-gray-700 font-medium">Processing your message...</span>
                             </div>
                         )}
                     </div>

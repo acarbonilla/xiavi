@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from services.voice_config import VOICE_CHOICES, DEFAULT_VOICE
 
 
 class CustomUser(AbstractUser):
@@ -28,6 +29,9 @@ class CustomUser(AbstractUser):
         return f"{self.username} ({self.get_language_level_display()})"
 
 
+
+
+
 class LearnerProfile(models.Model):
     """
     Extended profile for learners with progress tracking.
@@ -41,6 +45,16 @@ class LearnerProfile(models.Model):
     topics_covered = models.JSONField(default=dict, help_text='Topics and conversation counts')
     skill_scores = models.JSONField(default=dict, help_text='Latest skill scores')
     last_conversation_date = models.DateField(null=True, blank=True)
+    preferred_voice = models.CharField(
+        max_length=20, 
+        choices=VOICE_CHOICES, 
+        default=DEFAULT_VOICE,
+        help_text='Preferred AI voice for conversations'
+    )
+    
+    # Daily Goals
+    daily_goal_minutes = models.IntegerField(default=10, help_text='Daily speaking time goal in minutes')
+    daily_goal_conversations = models.IntegerField(default=1, help_text='Daily conversation count goal')
     
     class Meta:
         db_table = 'learner_profiles'

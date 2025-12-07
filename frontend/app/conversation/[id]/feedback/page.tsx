@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { ConversationFeedback } from '@/types';
-import { ArrowLeft, TrendingUp, Sparkles, Target, Lightbulb } from 'lucide-react';
+import { ConversationFeedback, ConversationMessage } from '@/types';
+import { ArrowLeft, TrendingUp, Sparkles, Target, Lightbulb, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+import AudioPlayer from '@/components/AudioPlayer';
 
 export default function FeedbackPage() {
     const params = useParams();
@@ -13,18 +14,41 @@ export default function FeedbackPage() {
     const sessionId = parseInt(params.id as string);
 
     const [feedback, setFeedback] = useState<ConversationFeedback | null>(null);
+    const [messages, setMessages] = useState<ConversationMessage[]>([]);
+    const [vocabulary, setVocabulary] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<{ message: string; sessionStatus?: string } | null>(null);
 
     useEffect(() => {
-        fetchFeedback();
+        fetchData();
     }, [sessionId]);
 
-    const fetchFeedback = async () => {
+    const fetchData = async () => {
         try {
-            const data = await api.getConversationFeedback(sessionId);
-            setFeedback(data);
-        } catch (error) {
+            const [feedbackData, messagesData, vocabularyData] = await Promise.all([
+                api.getConversationFeedback(sessionId),
+                api.getConversationMessages(sessionId),
+                api.getVocabulary({ source_session: sessionId })
+            ]);
+            setFeedback(feedbackData);
+            setMessages(messagesData);
+            setVocabulary(vocabularyData);
+            setError(null);
+        } catch (error: any) {
             console.error('Error fetching feedback:', error);
+
+            // Extract error message from API response
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                setError({
+                    message: errorData.error || 'Unable to load feedback',
+                    sessionStatus: errorData.session_status
+                });
+            } else {
+                setError({
+                    message: 'Unable to load feedback. Please try again later.'
+                });
+            }
         } finally {
             setLoading(false);
         }
@@ -46,6 +70,53 @@ export default function FeedbackPage() {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="max-w-md mx-auto text-center px-4">
+                    <div className="card">
+                        <div className="mb-6">
+                            {error.sessionStatus === 'active' && (
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
+                                    <span className="text-3xl">💬</span>
+                                </div>
+                            )}
+                            {error.sessionStatus === 'incomplete' && (
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-100 mb-4">
+                                    <span className="text-3xl">⏸️</span>
+                                </div>
+                            )}
+                            {!error.sessionStatus || error.sessionStatus === 'completed' && (
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                                    <span className="text-3xl">📋</span>
+                                </div>
+                            )}
+
+                            <h2 className="text-xl font-bold text-gray-900 mb-2">Feedback Not Available</h2>
+                            <p className="text-gray-600 mb-6">{error.message}</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            {error.sessionStatus === 'active' && (
+                                <Link href={`/conversation/${sessionId}`} className="btn-primary block">
+                                    Continue Conversation
+                                </Link>
+                            )}
+                            {error.sessionStatus === 'incomplete' && (
+                                <Link href={`/conversation/${sessionId}`} className="btn-primary block">
+                                    Resume Conversation
+                                </Link>
+                            )}
+                            <Link href="/dashboard" className="btn-outline block">
+                                Back to Dashboard
+                            </Link>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -168,6 +239,119 @@ export default function FeedbackPage() {
                         <h3 className="text-lg font-semibold text-primary-900">Tips for Next Time</h3>
                     </div>
                     <div className="text-primary-800 whitespace-pre-line">{feedback.tips}</div>
+                </div>
+
+                {/* Suggested Vocabulary */}
+                {vocabulary.length > 0 && (
+                    <div className="card bg-indigo-50 border-indigo-200">
+                        <div className="flex items-center space-x-2 mb-4">
+                            <span className="text-2xl">📚</span>
+                            <h3 className="text-lg font-semibold text-indigo-900">Suggested Vocabulary</h3>
+                        </div>
+                        <div className="space-y-4">
+                            <p className="text-indigo-800 text-sm">
+                                Based on your conversation, here are some words you might find useful:
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {vocabulary.map((item) => (
+                                    <div key={item.id} className="bg-white p-4 rounded-lg shadow-sm border border-indigo-100">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h4 className="font-bold text-gray-900">{item.word}</h4>
+                                            <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                                                New
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-2">{item.definition}</p>
+                                        {item.example_sentence && (
+                                            <p className="text-xs text-gray-500 italic">"{item.example_sentence}"</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="text-center mt-4">
+                                <Link href="/vocabulary" className="text-indigo-600 font-medium hover:text-indigo-800 text-sm">
+                                    View all vocabulary →
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Filler Words */}
+                {feedback.filler_word_count > 0 && (
+                    <div className="card bg-blue-50 border-blue-200">
+                        <div className="flex items-center space-x-2 mb-4">
+                            <span className="text-2xl">💭</span>
+                            <h3 className="text-lg font-semibold text-blue-900">Filler Word Analysis</h3>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="text-center p-4 bg-white rounded-lg">
+                                    <div className="text-3xl font-bold text-blue-900">{feedback.filler_word_count}</div>
+                                    <div className="text-sm text-blue-700">Total Filler Words</div>
+                                </div>
+                                <div className="text-center p-4 bg-white rounded-lg">
+                                    <div className="text-3xl font-bold text-blue-900">
+                                        {feedback.filler_word_rate.toFixed(1)}
+                                    </div>
+                                    <div className="text-sm text-blue-700">Per Minute</div>
+                                </div>
+                            </div>
+
+                            {Object.keys(feedback.filler_words_breakdown).length > 0 && (
+                                <div className="bg-white rounded-lg p-4">
+                                    <h4 className="font-semibold text-blue-900 mb-3">Breakdown:</h4>
+                                    <div className="space-y-2">
+                                        {Object.entries(feedback.filler_words_breakdown)
+                                            .sort(([, a], [, b]) => (b as number) - (a as number))
+                                            .map(([word, count]) => (
+                                                <div key={word} className="flex items-center justify-between">
+                                                    <span className="text-blue-800 font-medium capitalize">{word}</span>
+                                                    <span className="px-3 py-1 bg-blue-100 text-blue-900 rounded-full text-sm font-semibold">
+                                                        {count}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <p className="text-blue-800 text-sm">
+                                💡 Try to reduce filler words by pausing and thinking before speaking. It's okay to have silence!
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Transcript & Recordings */}
+                <div className="card">
+                    <div className="flex items-center space-x-2 mb-6">
+                        <MessageCircle className="w-5 h-5 text-primary-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">Conversation Transcript</h3>
+                    </div>
+                    <div className="space-y-6">
+                        {messages.map((msg) => (
+                            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[80%] ${msg.role === 'user' ? 'bg-primary-50' : 'bg-gray-50'} rounded-lg p-4`}>
+                                    <div className="flex items-center space-x-2 mb-2">
+                                        <span className={`text-xs font-bold uppercase ${msg.role === 'user' ? 'text-primary-700' : 'text-gray-700'}`}>
+                                            {msg.role === 'user' ? 'You' : 'AI Coach'}
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-800 whitespace-pre-wrap mb-3">{msg.text}</p>
+
+                                    {msg.role === 'user' && msg.audio_file && (
+                                        <div className="mt-2">
+                                            <AudioPlayer audioUrl={msg.audio_file} />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Actions */}

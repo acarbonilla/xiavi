@@ -57,7 +57,10 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 
+
 # Testing
 .coverage
 htmlcov/
 .pytest_cache/
+
+!frontend/lib/

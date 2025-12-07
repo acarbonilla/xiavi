@@ -45,3 +45,33 @@ class TrainingFeedback(models.Model):
     
     def __str__(self):
         return f"Feedback: {self.session} - Score: {self.score}"
+
+
+class Scenario(models.Model):
+    """
+    Structured roleplay scenarios with specific objectives.
+    """
+    DIFFICULTY_CHOICES = (
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+    )
+    
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='beginner')
+    system_prompt = models.TextField(help_text="The roleplay instructions for the AI")
+    initial_message = models.TextField(help_text="The first message the AI sends")
+    objectives = models.JSONField(default=list, help_text="List of objectives for the user to complete")
+    icon = models.CharField(max_length=50, default='🎭')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'scenarios'
+        verbose_name = 'Scenario'
+        verbose_name_plural = 'Scenarios'
+        ordering = ['difficulty', 'title']
+    
+    def __str__(self):
+        return f"{self.title} ({self.get_difficulty_display()})"

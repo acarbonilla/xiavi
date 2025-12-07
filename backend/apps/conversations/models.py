@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from services.voice_config import VOICE_CHOICES
 
 
 class Topic(models.Model):
@@ -37,11 +38,13 @@ class ConversationSession(models.Model):
     """
     STATUS_CHOICES = (
         ('active', 'Active'),
+        ('incomplete', 'Incomplete'),
         ('completed', 'Completed'),
     )
     
     user = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE, related_name='conversations')
     topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, null=True, related_name='sessions')
+    scenario = models.ForeignKey('training.Scenario', on_delete=models.SET_NULL, null=True, blank=True, related_name='sessions')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True, blank=True)
@@ -49,6 +52,19 @@ class ConversationSession(models.Model):
     message_count = models.IntegerField(default=0)
     user_message_count = models.IntegerField(default=0)
     total_speaking_time = models.IntegerField(default=0, help_text='User speaking time in seconds')
+    voice_preference = models.CharField(
+        max_length=20,
+        choices=VOICE_CHOICES,
+        null=True,
+        blank=True,
+        help_text='Voice preference for this session (overrides user profile default)'
+    )
+
+
+    # ADD THESE:
+    conversation_memory = models.JSONField(default=list)
+    emotion_trend = models.JSONField(default=list)
+    conversation_depth = models.IntegerField(default=0)
     
     class Meta:
         db_table = 'conversation_sessions'
@@ -67,18 +83,31 @@ class ConversationSession(models.Model):
         self.save()
         
         # Update user profile
-        profile = self.user.learner_profile
-        profile.total_conversations += 1
-        profile.total_speaking_time += self.total_speaking_time
-        profile.update_streak(self.ended_at.date())
-        
-        # Update topics covered
-        if self.topic:
-            topics_covered = profile.topics_covered or {}
-            topic_name = self.topic.name
-            topics_covered[topic_name] = topics_covered.get(topic_name, 0) + 1
-            profile.topics_covered = topics_covered
-            profile.save()
+        try:
+            if hasattr(self.user, 'learner_profile'):
+                profile = self.user.learner_profile
+                profile.total_conversations += 1
+                profile.total_speaking_time += self.total_speaking_time
+                profile.update_streak(self.ended_at.date())
+                
+                # Update topics covered
+                if self.topic:
+                    topics_covered = profile.topics_covered or {}
+                    topic_name = self.topic.name
+                    topics_covered[topic_name] = topics_covered.get(topic_name, 0) + 1
+                    profile.topics_covered = topics_covered
+                    profile.save()
+        except Exception as e:
+            # Log error but don't fail the transaction
+            print(f"Error updating profile stats: {e}")
+    
+    def mark_incomplete(self):
+        """Mark conversation as incomplete (not finished)."""
+        self.status = 'incomplete'
+        self.ended_at = timezone.now()
+        self.duration = int((self.ended_at - self.started_at).total_seconds())
+        self.save()
+        # Note: Does NOT update profile stats (only completed conversations count)
 
 
 class ConversationMessage(models.Model):
@@ -139,6 +168,11 @@ class ConversationFeedback(models.Model):
     improvements = models.TextField(blank=True, help_text='Areas for improvement')
     tips = models.TextField(blank=True, help_text='Actionable tips')
     
+    # Filler Word Detection
+    filler_word_count = models.IntegerField(default=0, help_text='Total filler words used')
+    filler_word_rate = models.FloatField(default=0.0, help_text='Filler words per minute')
+    filler_words_breakdown = models.JSONField(default=dict, help_text='Count by filler word type')
+    
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -153,13 +187,79 @@ class ConversationFeedback(models.Model):
         super().save(*args, **kwargs)
         
         # Update user's skill scores in profile
-        profile = self.session.user.learner_profile
-        profile.skill_scores = {
-            'clarity': self.clarity_score,
-            'fluency': self.fluency_score,
-            'vocabulary': self.vocabulary_score,
-            'grammar': self.grammar_score,
-            'confidence': self.confidence_score,
-            'engagement': self.engagement_score,
-        }
-        profile.save()
+        try:
+            if hasattr(self.session.user, 'learner_profile'):
+                profile = self.session.user.learner_profile
+                profile.skill_scores = {
+                    'clarity': self.clarity_score,
+                    'fluency': self.fluency_score,
+                    'vocabulary': self.vocabulary_score,
+                    'grammar': self.grammar_score,
+                    'confidence': self.confidence_score,
+                    'engagement': self.engagement_score,
+                }
+                profile.save()
+        except Exception as e:
+            print(f"Error updating profile skills: {e}")
+
+
+class DocumentUpload(models.Model):
+    """
+    Uploaded documents for conversation context (RAG).
+    Max 5 documents per session, session-specific only.
+    """
+    FILE_TYPE_CHOICES = (
+        ('pdf', 'PDF'),
+        ('txt', 'Text'),
+    )
+    
+    session = models.ForeignKey(
+        ConversationSession, 
+        on_delete=models.CASCADE, 
+        related_name='documents'
+    )
+    file = models.FileField(upload_to='conversations/documents/')
+    filename = models.CharField(max_length=255)
+    file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
+    file_size = models.IntegerField(help_text='Size in bytes')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    processed = models.BooleanField(default=False)
+    processing_error = models.TextField(blank=True, help_text='Error message if processing failed')
+    chunk_count = models.IntegerField(default=0)
+    
+    class Meta:
+        db_table = 'document_uploads'
+        verbose_name = 'Document Upload'
+        verbose_name_plural = 'Document Uploads'
+        ordering = ['-uploaded_at']
+    
+    def __str__(self):
+        return f"{self.filename} ({self.get_file_type_display()}) - {self.session}"
+
+
+class DocumentChunk(models.Model):
+    """
+    Text chunks with vector embeddings for RAG retrieval.
+    Chunks are created during document processing.
+    """
+    document = models.ForeignKey(
+        DocumentUpload, 
+        on_delete=models.CASCADE, 
+        related_name='chunks'
+    )
+    chunk_index = models.IntegerField(help_text='Sequential index of chunk in document')
+    text = models.TextField(help_text='Chunk text content')
+    embedding = models.JSONField(help_text='768-dimensional vector embedding as JSON array')
+    token_count = models.IntegerField(default=0, help_text='Approximate token count')
+    
+    class Meta:
+        db_table = 'document_chunks'
+        verbose_name = 'Document Chunk'
+        verbose_name_plural = 'Document Chunks'
+        ordering = ['document', 'chunk_index']
+        indexes = [
+            models.Index(fields=['document', 'chunk_index']),
+        ]
+    
+    def __str__(self):
+        return f"Chunk {self.chunk_index} of {self.document.filename}"

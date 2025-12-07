@@ -1,0 +1,43 @@
+Sample Resume
+==============
+
+Name: John Doe
+Email: john.doe@email.com
+Phone: (555) 123-4567
+
+WORK EXPERIENCE
+---------------
+
+Senior Software Engineer at Tech Corp (2020-Present)
+- Led development of microservices architecture serving 1M+ users
+- Implemented CI/CD pipeline reducing deployment time by 60%
+- Mentored team of 5 junior developers
+- Technologies: Python, Django, React, AWS, Docker
+
+Software Developer at StartupXYZ (2018-2020)
+- Built RESTful APIs for mobile applications
+- Developed real-time chat system using WebSockets
+- Optimized database queries improving performance by 40%
+- Technologies: Node.js, MongoDB, React Native
+
+EDUCATION
+---------
+
+Bachelor of Science in Computer Science
+University of Technology (2014-2018)
+GPA: 3.8/4.0
+
+SKILLS
+------
+
+Programming Languages: Python, JavaScript, Java, C++
+Frameworks: Django, Flask, React, Node.js
+Databases: PostgreSQL, MongoDB, Redis
+Tools: Docker, Kubernetes, Git, Jenkins
+Cloud: AWS, Google Cloud Platform
+
+CERTIFICATIONS
+--------------
+
+AWS Certified Solutions Architect
+Google Cloud Professional Developer

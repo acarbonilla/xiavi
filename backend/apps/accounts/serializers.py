@@ -7,7 +7,7 @@ class LearnerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = LearnerProfile
         fields = ['bio', 'total_conversations', 'total_speaking_time', 'current_streak', 
-                  'longest_streak', 'topics_covered', 'skill_scores', 'last_conversation_date']
+                  'longest_streak', 'topics_covered', 'skill_scores', 'last_conversation_date', 'preferred_voice']
         read_only_fields = ['total_conversations', 'total_speaking_time', 'current_streak', 
                            'longest_streak', 'last_conversation_date']
 
@@ -20,6 +20,23 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'language_level',
                   'native_language', 'target_language', 'phone', 'learner_profile', 'created_at']
         read_only_fields = ['id', 'created_at']
+
+    def update(self, instance, validated_data):
+        learner_profile_data = validated_data.pop('learner_profile', None)
+        
+        # Update User fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Update LearnerProfile fields
+        if learner_profile_data:
+            profile = instance.learner_profile
+            for attr, value in learner_profile_data.items():
+                setattr(profile, attr, value)
+            profile.save()
+            
+        return instance
 
 
 class RegisterSerializer(serializers.ModelSerializer):

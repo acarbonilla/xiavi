@@ -14,18 +14,24 @@ import {
     Sparkles,
     Play,
     History,
-    BarChart3
+    BarChart3,
+    Briefcase,
+    BookOpen
 } from 'lucide-react';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 
 export default function DashboardPage() {
-    const { user, logout, isAuthenticated } = useAuth();
+    const { user, logout, isAuthenticated, loading: authLoading } = useAuth();
     const router = useRouter();
     const [topics, setTopics] = useState<Topic[]>([]);
     const [recentConversations, setRecentConversations] = useState<ConversationSession[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Wait for auth to check token before redirecting
+        if (authLoading) return;
+
         if (!isAuthenticated) {
             router.push('/login');
             return;
@@ -47,7 +53,7 @@ export default function DashboardPage() {
         };
 
         fetchData();
-    }, [isAuthenticated, router]);
+    }, [isAuthenticated, authLoading, router]);
 
     const handleStartConversation = async (topicId: number) => {
         try {
@@ -80,7 +86,7 @@ export default function DashboardPage() {
         return colors[color] || 'from-primary-500 to-primary-600';
     };
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -90,31 +96,7 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-3">
-                            <MessageCircle className="w-8 h-8 text-primary-600" />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">
-                                    Welcome back, {user?.first_name}!
-                                </h1>
-                                <p className="text-sm text-gray-600 capitalize">
-                                    {user?.language_level} Level
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={logout}
-                            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-                        >
-                            <LogOut className="w-5 h-5" />
-                            <span>Logout</span>
-                        </button>
-                    </div>
-                </div>
-            </header>
+            <Navbar />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Stats Cards */}
@@ -261,6 +243,22 @@ export default function DashboardPage() {
                                 <Link href="/progress" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                     <BarChart3 className="w-5 h-5 text-gray-600" />
                                     <span className="text-sm font-medium text-gray-900">View Progress</span>
+                                </Link>
+                                <Link href="/scenarios" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <Briefcase className="w-5 h-5 text-gray-600" />
+                                    <span className="text-sm font-medium text-gray-900">Practice Scenarios</span>
+                                </Link>
+                                <Link href="/vocabulary" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <BookOpen className="w-5 h-5 text-gray-600" />
+                                    <span className="text-sm font-medium text-gray-900">Vocabulary Builder</span>
+                                </Link>
+                                <Link href="/resume" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <Clock className="w-5 h-5 text-gray-600" />
+                                    <span className="text-sm font-medium text-gray-900">Resume Conversations</span>
+                                </Link>
+                                <Link href="/classroom" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <BookOpen className="w-5 h-5 text-gray-600" />
+                                    <span className="text-sm font-medium text-gray-900">AI Classroom</span>
                                 </Link>
                             </div>
                         </div>

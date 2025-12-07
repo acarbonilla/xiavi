@@ -1,13 +1,15 @@
 from rest_framework import serializers
-from .models import TrainingSession, TrainingFeedback
+from .models import TrainingSession, TrainingFeedback, Scenario
 
+class ScenarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Scenario
+        fields = ['id', 'title', 'description', 'difficulty', 'icon', 'objectives', 'is_active']
 
 class TrainingFeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrainingFeedback
-        fields = ['id', 'session', 'video_file', 'transcript', 'score', 'feedback', 'tips', 'created_at']
-        read_only_fields = ['id', 'transcript', 'score', 'feedback', 'tips', 'created_at']
-
+        fields = ['id', 'score', 'feedback_text', 'created_at']
 
 class TrainingSessionSerializer(serializers.ModelSerializer):
     question_text = serializers.CharField(source='question.text', read_only=True)

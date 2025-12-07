@@ -15,6 +15,9 @@ class CustomUserAdmin(UserAdmin):
     )
 
 
+
+
+
 @admin.register(LearnerProfile)
 class LearnerProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'total_conversations', 'total_speaking_time', 'current_streak', 'longest_streak']

@@ -3,11 +3,20 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
-from .models import TrainingSession, TrainingFeedback
-from .serializers import TrainingSessionSerializer, TrainingSessionCreateSerializer, TrainingFeedbackSerializer
+from .models import TrainingSession, TrainingFeedback, Scenario
+from .serializers import TrainingSessionSerializer, TrainingSessionCreateSerializer, TrainingFeedbackSerializer, ScenarioSerializer
 from services.deepgram_service import DeepgramService
 from services.gemini_service import GeminiService
 from django.utils import timezone
+
+
+class ScenarioViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for scenarios.
+    """
+    queryset = Scenario.objects.filter(is_active=True)
+    serializer_class = ScenarioSerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class TrainingSessionViewSet(viewsets.ModelViewSet):

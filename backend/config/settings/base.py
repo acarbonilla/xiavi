@@ -33,12 +33,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'django_extensions',
-    
     # Local apps
     'apps.accounts',
     'apps.conversations',
     'apps.core',
+    'apps.training',
+    'apps.questions',
+    'apps.classroom',
+    'apps.learning',
 ]
 
 MIDDLEWARE = [

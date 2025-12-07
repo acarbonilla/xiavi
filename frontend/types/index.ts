@@ -21,6 +21,7 @@ export interface LearnerProfile {
   topics_covered: Record<string, number>;
   skill_scores: SkillScores;
   last_conversation_date?: string;
+  preferred_voice: string;
 }
 
 export interface SkillScores {
@@ -44,6 +45,19 @@ export interface Topic {
   created_at: string;
 }
 
+export interface Scenario {
+  id: number;
+  title: string;
+  description: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  system_prompt: string;
+  initial_message: string;
+  objectives: string[];
+  icon: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface ConversationSession {
   id: number;
   user: number;
@@ -56,6 +70,7 @@ export interface ConversationSession {
   message_count: number;
   user_message_count: number;
   total_speaking_time: number;
+  voice_preference?: string;
   messages?: ConversationMessage[];
 }
 
@@ -67,6 +82,7 @@ export interface ConversationMessage {
   audio_file?: string;
   duration: number;
   timestamp: string;
+  referenced_documents?: string[];
 }
 
 export interface ConversationFeedback {
@@ -85,6 +101,9 @@ export interface ConversationFeedback {
   strengths: string;
   improvements: string;
   tips: string;
+  filler_word_count: number;
+  filler_word_rate: number;
+  filler_words_breakdown: Record<string, number>;
   created_at: string;
 }
 
@@ -110,4 +129,27 @@ export interface AuthResponse {
   refresh: string;
   access: string;
   user: User;
+}
+
+export interface Voice {
+  id: string;
+  name: string;
+  description: string;
+  google_voice: string;
+  gender: 'male' | 'female';
+  tone: string;
+  pitch_range: string;
+}
+
+export interface VocabularyItem {
+  id: number;
+  word: string;
+  definition: string;
+  example_sentence: string;
+  translation?: string;
+  mastery_level: number;
+  review_count: number;
+  times_correct: number;
+  created_at: string;
+  last_reviewed_at?: string;
 }

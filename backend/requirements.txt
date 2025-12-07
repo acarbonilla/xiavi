@@ -25,5 +25,11 @@ Pillow==10.2.0
 python-dateutil==2.8.2
 pytz==2024.1
 
+# Document Processing & RAG
+PyPDF2==3.0.1
+pdfplumber==0.11.0
+charset-normalizer==3.4.0
+numpy==1.26.4
+
 # Development
 django-extensions==3.2.3
