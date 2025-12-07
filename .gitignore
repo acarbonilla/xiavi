@@ -63,4 +63,11 @@ next-env.d.ts
 htmlcov/
 .pytest_cache/
 
+# API Keys and Secrets
+**/google-tts-key.json
+**/*-key.json
+**/*-keys.json
+**/credentials.json
+**/secrets.json
+
 !frontend/lib/
